@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>google map polygon project</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB_Dj4oGEGycTPQ0RhgSXmqqF_BNss75Vc">
+    </script>
+</head>
+<body >
+    <div id="map" style="height: 1000px;
+width: 1000px;"></div>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+
+        var json = [
+          {
+            "title": "Stockholm",
+            "lat": -86.4963623046875,
+            "lng": 22.02963780070074,
+            "description": "Stockholm is the capital and the largest city of Sweden and constitutes the most populated urban area in Scandinavia with a population of 2.1 million in the metropolitan area (2010)"
+          },
+          {
+            "title": "Oslo",
+            "lat": -86.35953369140625,
+            "lng":  21.820707853875028,
+            "description": "Oslo is a municipality, and the capital and most populous city of Norway with a metropolitan population of 1,442,318 (as of 2010)."
+          },
+          {
+            "title": "Copenhagen",
+            "lat": -86.63543701171875,
+            "lng": 21.815608175662636,
+            "description": "Copenhagen is the capital of Denmark and its most populous city, with a metropolitan population of 1,931,467 (as of 1 January 2012)."
+          },
+          {
+            "title": "Copenhagen2",
+            "lat": -86.69543701171875,
+            "lng": 21.875608175662636,
+            "description": "Copenhagen is the capital of Denmark and its most populous city, with a metropolitan population of 1,931,467 (as of 1 January 2012)."
+          }
+        ];
+
+
+    var map = new google.maps.Map(document.getElementById('map'), { center: new google.maps.LatLng(21.17, -86.66), zoom: 9, mapTypeId: google.maps.MapTypeId.HYBRID, scaleControl: true });
+    var isClosed = false;
+    poly = new google.maps.Polyline({ map: map, path: [], strokeColor: "#FF0000", strokeOpacity: 1.0, strokeWeight: 2 });
+    google.maps.event.addListener(map, 'click', function (clickEvent) {
+        if (isClosed){
+            return;
+        }
+        var markerIndex = poly.getPath().length;
+        var isFirstMarker = markerIndex === 0;
+        //create polygon on each click
+        var pImage = 'images/ppoint6.png';
+        var marker = new google.maps.Marker({ map: map, position: clickEvent.latLng, icon: pImage, draggable: false });
+        
+        if (isFirstMarker) {
+            //check if we clicked on first marker to complete the polygon
+            google.maps.event.addListener(marker, 'click', function () {
+            var npol = poly.getPath().length;
+            var paths = poly.getPath();           
+            var polygonArray = [];
+            var markersArray = [];
+            //create polygon Array of points
+            for (var i = 0; i < npol; i++) {
+                var nppoint = [paths.j[i].k,paths.j[i].D];
+                polygonArray.push(nppoint); 
+            };
+             //create markers Array and check if inside Polygon
+            for (var i = 0; i < json.length; i++) {
+                var markerPoint = [json[i]['lng'], json[i]['lat'] ];
+                var isInPoly = isPointInPoly(polygonArray,markerPoint);
+                if(isInPoly){
+                    var pos = new google.maps.LatLng(json[i]['lng'], json[i]['lat']);   
+                    console.log(json[i]['lng']);          
+                    var marker = new google.maps.Marker({ map: map, position: pos, draggable: false,animation: google.maps.Animation.DROP });            
+                }
+            };  
+
+            if (isClosed){
+                return;
+            }
+            var path = poly.getPath();
+            poly.setMap(null);
+            poly = new google.maps.Polygon({ map: map, path: path, strokeColor: "#FF0000", strokeOpacity: 0.8, strokeWeight: 2, fillColor: "#FF0000", fillOpacity: 0.35 });
+            isClosed = true;
+        });
+        }
+        google.maps.event.addListener(marker, 'drag', function (dragEvent) {
+            poly.getPath().setAt(markerIndex, dragEvent.latLng);
+        });
+        poly.getPath().push(clickEvent.latLng);
+        google.maps.event.addListener(marker, 'overlaycomplete', function(polygon) {
+            console.log(polygon);
+            console.log(marker);
+        });
+    });
+});
+    //function to check if point is in polygon
+    function isPointInPoly(poly, pt){
+        for(var c = false, i = -1, l = poly.length, j = l - 1; ++i < l; j = i)
+            ((poly[i][1] <= pt[1] && pt[1] < poly[j][1]) || (poly[j][1] <= pt[1] && pt[1] < poly[i][1]))
+            && (pt[0] < (poly[j][0] - poly[i][0]) * (pt[1] - poly[i][1]) / (poly[j][1] - poly[i][1]) + poly[i][0])
+            && (c = !c);
+        return c;
+    } 
+</script>
+</body>
+</html>
